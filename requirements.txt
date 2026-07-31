@@ -1,0 +1,23 @@
+# VC Analytics Engine — Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# ── Core Data Engineering
+pandas>=2.1.0
+numpy>=1.26.0
+sqlalchemy>=2.0.0
+pymysql>=1.1.0
+
+# ── Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# ── AI / LLM (local — no external APIs)
+requests>=2.31.0             # for Ollama HTTP calls
+transformers>=4.40.0         # HuggingFace fallback
+torch>=2.2.0                 # CPU inference (install CPU-only: pip install torch --index-url https://download.pytorch.org/whl/cpu)
+accelerate>=0.27.0           # HuggingFace model loading helper
+
+# ── Utilities
+python-dotenv>=1.0.0         # optional: load .env files
+tqdm>=4.66.0                 # progress bars
+colorlog>=6.8.0              # optional: colored log output

@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VC Analytics — AI Due Diligence Engine</title>
+  <meta name="description" content="Production-grade Venture Capital Funding Analytics Dashboard with AI-powered investment thesis generation, interactive charts, and real-time market insights." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ═══════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════ */
+    :root {
+      --bg-deep:        #050a14;
+      --bg-card:        #0d1629;
+      --bg-card-2:      #111e36;
+      --bg-glass:       rgba(13, 22, 41, 0.72);
+      --border:         rgba(108, 99, 255, 0.18);
+      --border-bright:  rgba(108, 99, 255, 0.45);
+
+      --accent-primary: #6C63FF;
+      --accent-cyan:    #43E8D8;
+      --accent-rose:    #FF6584;
+      --accent-amber:   #F7B731;
+      --accent-green:   #26de81;
+
+      --text-primary:   #E8EDF5;
+      --text-secondary: #8A94A8;
+      --text-muted:     #4A5568;
+
+      --radius-sm:      8px;
+      --radius-md:      14px;
+      --radius-lg:      20px;
+      --radius-xl:      28px;
+
+      --shadow-glow:    0 0 40px rgba(108, 99, 255, 0.15);
+      --shadow-card:    0 8px 32px rgba(0, 0, 0, 0.4);
+      --shadow-intense: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+      --font-main:  'Inter', sans-serif;
+      --font-mono:  'JetBrains Mono', monospace;
+
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ═══════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ═══════════════════════════════════════
+       ANIMATED GRID BACKGROUND
+    ═══════════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(108, 99, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108, 99, 255, 0.04) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -20%;
+      width: 70%;
+      height: 70%;
+      background: radial-gradient(ellipse, rgba(108, 99, 255, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: orb-drift 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes orb-drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(10%, 15%) scale(1.1); }
+    }
+
+    /* ═══════════════════════════════════════
+       LAYOUT WRAPPERS
+    ═══════════════════════════════════════ */
+    .layout { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+
+    /* ═══════════════════════════════════════
+       HEADER / HERO
+    ═══════════════════════════════════════ */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(5, 10, 20, 0.82);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 4px 16px rgba(108, 99, 255, 0.4);
+    }
+
+    .logo-text {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ═══════════════════════════════════════
+       HERO BANNER
+    ═══════════════════════════════════════ */
+    .hero {
+      padding: 72px 0 48px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border-bright);
+      background: rgba(108, 99, 255, 0.1);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent-cyan);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    h1.hero-title {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-cyan) 50%, var(--accent-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin: 0 auto 32px;
+    }
+
+    /* ═══════════════════════════════════════
+       KPI STAT CARDS
+    ═══════════════════════════════════════ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-cyan));
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-bright);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .kpi-card:hover::before { opacity: 1; }
+
+    .kpi-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+
+    .kpi-icon.purple { background: rgba(108, 99, 255, 0.15); }
+    .kpi-icon.cyan   { background: rgba(67, 232, 216, 0.15); }
+    .kpi-icon.rose   { background: rgba(255, 101, 132, 0.15); }
+    .kpi-icon.amber  { background: rgba(247, 183, 49, 0.15); }
+    .kpi-icon.green  { background: rgba(38, 222, 129, 0.15); }
+
+    .kpi-value {
+      font-size: 30px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      line-height: 1;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #fff, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+
+    .kpi-skeleton .kpi-value {
+      background: linear-gradient(90deg, #1a2440 25%, #243055 50%, #1a2440 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      -webkit-text-fill-color: transparent;
+      border-radius: 4px;
+      display: inline-block;
+      min-width: 80px;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ═══════════════════════════════════════
+       SECTION HEADINGS
+    ═══════════════════════════════════════ */
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .section-title span {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ═══════════════════════════════════════
+       CHART PANELS
+    ═══════════════════════════════════════ */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
+
+    .chart-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .chart-panel::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(108, 99, 255, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .chart-panel h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .chart-panel .chart-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-family: var(--font-mono);
+    }
+
+    .chart-container { position: relative; width: 100%; }
+
+    .chart-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: var(--text-muted);
+      font-size: 13px;
+      gap: 10px;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════
+       MARKET TABLE
+    ═══════════════════════════════════════ */
+    .table-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 40px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .table-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card-2);
+    }
+
+    .table-header h2 { font-size: 16px; font-weight: 600; }
+
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      padding: 12px 20px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card-2);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: var(--transition);
+    }
+
+    tbody tr:hover { background: rgba(108, 99, 255, 0.05); }
+
+    tbody td {
+      padding: 12px 20px;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .rank-1 { background: rgba(247, 183, 49, 0.2); color: var(--accent-amber); }
+    .rank-2 { background: rgba(200, 200, 220, 0.15); color: #c8c8dc; }
+    .rank-3 { background: rgba(180, 120, 60, 0.15); color: #cd7f32; }
+    .rank-n { background: rgba(108, 99, 255, 0.1); color: var(--accent-primary); }
+
+    .funding-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .funding-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-cyan));
+      min-width: 4px;
+      transition: width 0.6s ease;
+    }
+
+    /* ═══════════════════════════════════════
+       AI INSIGHTS FEED
+    ═══════════════════════════════════════ */
+    .ai-section { margin-bottom: 60px; }
+
+    .ai-header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(67,232,216,0.15));
+      border: 1px solid rgba(67,232,216,0.3);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .ai-badge::before {
+      content: '◉';
+      font-size: 8px;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+      color: var(--accent-cyan);
+    }
+
+    .ai-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+    }
+
+    @media (max-width: 480px) { .ai-grid { grid-template-columns: 1fr; } }
+
+    .ai-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+      box-shadow: var(--shadow-card);
+    }
+
+    .ai-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(108,99,255,0.04) 0%, rgba(67,232,216,0.04) 100%);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .ai-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--border-bright);
+      box-shadow: var(--shadow-glow), var(--shadow-intense);
+    }
+
+    .ai-card:hover::before { opacity: 1; }
+
+    .ai-card-glow {
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .ai-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    .company-info { flex: 1; min-width: 0; }
+
+    .company-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .company-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid;
+    }
+
+    .tag-market  { border-color: rgba(108,99,255,0.4); color: #a09aff; background: rgba(108,99,255,0.1); }
+    .tag-country { border-color: rgba(67,232,216,0.3); color: var(--accent-cyan); background: rgba(67,232,216,0.08); }
+    .tag-stage   { border-color: rgba(247,183,49,0.3); color: var(--accent-amber); background: rgba(247,183,49,0.08); }
+
+    .tier-badge {
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .tier-unicorn    { background: linear-gradient(135deg, rgba(247,183,49,0.2), rgba(255,101,132,0.2)); color: var(--accent-amber); border: 1px solid rgba(247,183,49,0.3); }
+    .tier-seriesD    { background: rgba(108,99,255,0.15); color: #a09aff; border: 1px solid rgba(108,99,255,0.3); }
+    .tier-seriesBC   { background: rgba(67,232,216,0.1); color: var(--accent-cyan); border: 1px solid rgba(67,232,216,0.25); }
+    .tier-seriesA    { background: rgba(38,222,129,0.1); color: var(--accent-green); border: 1px solid rgba(38,222,129,0.25); }
+    .tier-seed       { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border); }
+
+    .thesis-divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+      margin: 16px 0;
+    }
+
+    .thesis-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .thesis-label::before {
+      content: '';
+      display: inline-block;
+      width: 16px; height: 2px;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-cyan));
+      border-radius: 1px;
+    }
+
+    .thesis-text {
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .thesis-text strong { color: var(--text-primary); font-weight: 600; }
+
+    .ai-card-footer {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .model-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .model-chip::before {
+      content: '🤖';
+      font-size: 11px;
+    }
+
+    .generated-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ═══════════════════════════════════════
+       DEMO WATERMARK
+    ═══════════════════════════════════════ */
+    .demo-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      background: rgba(247, 183, 49, 0.08);
+      border: 1px solid rgba(247, 183, 49, 0.25);
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--accent-amber);
+    }
+
+    .demo-banner.visible { display: flex; }
+
+    /* ═══════════════════════════════════════
+       FILTER BAR
+    ═══════════════════════════════════════ */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .filter-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .filter-btn {
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-family: var(--font-main);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      border-color: var(--accent-primary);
+      background: rgba(108, 99, 255, 0.12);
+      color: var(--text-primary);
+    }
+
+    /* ═══════════════════════════════════════
+       LOADING SKELETON FOR AI CARDS
+    ═══════════════════════════════════════ */
+    .skeleton-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+
+    .skeleton-line {
+      height: 14px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #1a2440 25%, #243055 50%, #1a2440 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      margin-bottom: 10px;
+    }
+
+    .skeleton-line.w-60 { width: 60%; }
+    .skeleton-line.w-40 { width: 40%; }
+    .skeleton-line.w-80 { width: 80%; }
+    .skeleton-line.w-full { width: 100%; }
+    .skeleton-line.h-20 { height: 20px; margin-bottom: 14px; }
+
+    /* ═══════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════ */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+    }
+
+    footer span { color: var(--accent-primary); }
+
+    /* ═══════════════════════════════════════
+       SCROLLBAR STYLING
+    ═══════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(108,99,255,0.5); }
+
+    /* ═══════════════════════════════════════
+       TOAST NOTIFICATIONS
+    ═══════════════════════════════════════ */
+    #toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 10px;
+      z-index: 999;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-bright);
+      animation: slide-in 0.3s ease;
+      max-width: 320px;
+    }
+
+    .toast.success { background: rgba(38,222,129,0.12); color: var(--accent-green); }
+    .toast.error   { background: rgba(255,101,132,0.12); color: var(--accent-rose); }
+    .toast.info    { background: rgba(108,99,255,0.12); color: var(--accent-primary); }
+
+    @keyframes slide-in {
+      from { transform: translateX(100px); opacity: 0; }
+      to   { transform: translateX(0);     opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      h1.hero-title { font-size: 36px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ░░░ HEADER ░░░ -->
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo" aria-label="VC Analytics Home">
+        <div class="logo-icon">📈</div>
+        <span class="logo-text">VC Analytics Engine</span>
+      </a>
+      <div class="status-badge" id="status-badge">
+        <div class="status-dot"></div>
+        Connecting…
+      </div>
+    </div>
+  </header>
+
+  <!-- ░░░ HERO ░░░ -->
+  <div class="layout">
+    <section class="hero" aria-label="Dashboard Overview">
+      <div class="hero-badge">⚡ Live Analytics · AI-Powered Due Diligence</div>
+      <h1 class="hero-title">VC Funding Analytics<br />& AI Due Diligence Engine</h1>
+      <p class="hero-sub">
+        Real-time venture capital intelligence — powered by local LLMs, advanced SQL window functions,
+        and interactive market visualisation.
+      </p>
+    </section>
+
+    <!-- ░░░ KPI CARDS ░░░ -->
+    <section aria-label="Key Performance Indicators">
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card kpi-skeleton" id="kpi-startups">
+          <div class="kpi-icon purple">🚀</div>
+          <div class="kpi-value" id="val-startups">—</div>
+          <div class="kpi-label">Total Startups</div>
+        </div>
+        <div class="kpi-card kpi-skeleton" id="kpi-funding">
+          <div class="kpi-icon cyan">💰</div>
+          <div class="kpi-value" id="val-funding">—</div>
+          <div class="kpi-label">Total Funding (USD)</div>
+        </div>
+        <div class="kpi-card kpi-skeleton" id="kpi-markets">
+          <div class="kpi-icon amber">🏛️</div>
+          <div class="kpi-value" id="val-markets">—</div>
+          <div class="kpi-label">Market Sectors</div>
+        </div>
+        <div class="kpi-card kpi-skeleton" id="kpi-countries">
+          <div class="kpi-icon rose">🌍</div>
+          <div class="kpi-value" id="val-countries">—</div>
+          <div class="kpi-label">Countries</div>
+        </div>
+        <div class="kpi-card kpi-skeleton" id="kpi-top-market">
+          <div class="kpi-icon green">🏆</div>
+          <div class="kpi-value" id="val-top-market" style="font-size:16px">—</div>
+          <div class="kpi-label">Leading Sector</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░░ CHARTS ░░░ -->
+    <section aria-label="Market Charts">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Funding <span>Velocity</span> Analysis</h2>
+        </div>
+        <span class="section-meta">Window Function · Cumulative SUM OVER PARTITION</span>
+      </div>
+
+      <div class="charts-grid">
+        <!-- Line chart: cumulative velocity -->
+        <div class="chart-panel" id="panel-trend">
+          <h2>Cumulative Funding Velocity by Market</h2>
+          <p class="chart-desc">SUM(funding_total_usd) OVER (PARTITION BY market ORDER BY founded_year)</p>
+          <div class="chart-container">
+            <div class="chart-loading" id="trend-loading">
+              <div class="spinner"></div>
+              Fetching funding trends…
+            </div>
+            <canvas id="chart-trend" height="300" style="display:none"></canvas>
+          </div>
+        </div>
+
+        <!-- Doughnut chart: funding by status -->
+        <div class="chart-panel">
+          <h2>Portfolio Status Mix</h2>
+          <p class="chart-desc">Funding distribution by operational status</p>
+          <div class="chart-container">
+            <div class="chart-loading" id="status-loading">
+              <div class="spinner"></div>
+              Loading status data…
+            </div>
+            <canvas id="chart-status" height="300" style="display:none"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░░ TOP MARKETS TABLE ░░░ -->
+    <section aria-label="Top Markets by Funding">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Top 15 <span>Investment</span> Markets</h2>
+        </div>
+        <span class="section-meta">Ranked by total funding captured</span>
+      </div>
+
+      <div class="table-panel">
+        <div class="table-header">
+          <h2>Market Intelligence Report</h2>
+        </div>
+        <div class="table-scroll">
+          <table id="markets-table" aria-label="Top Markets Table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Market Sector</th>
+                <th>Total Funding (USD)</th>
+                <th>Avg Funding / Co.</th>
+                <th>Startups</th>
+                <th>Countries</th>
+                <th>Allocation</th>
+              </tr>
+            </thead>
+            <tbody id="markets-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">
+                <div class="spinner" style="margin:0 auto 10px"></div>Loading market data…
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░░ AI INSIGHTS FEED ░░░ -->
+    <section class="ai-section" aria-label="AI Investment Thesis Feed">
+      <div class="section-header">
+        <div class="ai-header-row">
+          <h2 class="section-title">AI <span>Insights</span> Feed</h2>
+          <div class="ai-badge">LLM Generated</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">
+        Investment thesis summaries generated by a local Ollama/HuggingFace LLM acting as a senior VC analyst.
+      </p>
+
+      <!-- Demo watermark -->
+      <div class="demo-banner" id="demo-banner">
+        ⚠️ <strong>Demo Mode:</strong> Run <code style="font-family:var(--font-mono)">ai_due_diligence.py</code> to populate real LLM summaries.
+        Showing illustrative examples.
+      </div>
+
+      <!-- Market filter buttons -->
+      <div class="filter-bar" id="ai-filter-bar" role="toolbar" aria-label="Filter by market">
+        <span class="filter-label">Filter:</span>
+        <button class="filter-btn active" data-market="" id="btn-all">All Markets</button>
+      </div>
+
+      <!-- Cards grid -->
+      <div class="ai-grid" id="ai-cards-grid">
+        <!-- Skeleton loaders -->
+        <div class="skeleton-card">
+          <div class="skeleton-line h-20 w-60"></div>
+          <div class="skeleton-line w-40"></div>
+          <div class="skeleton-line w-full"></div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-line h-20 w-60"></div>
+          <div class="skeleton-line w-40"></div>
+          <div class="skeleton-line w-full"></div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-line h-20 w-60"></div>
+          <div class="skeleton-line w-40"></div>
+          <div class="skeleton-line w-full"></div>
+          <div class="skeleton-line w-80"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ░░░ FOOTER ░░░ -->
+  <footer>
+    <p>VC Analytics Engine · Powered by <span>Flask</span> · <span>MySQL</span> · <span>Ollama LLM</span> · <span>Chart.js</span></p>
+    <p style="margin-top:6px">Local AI Infrastructure · No external API dependencies</p>
+  </footer>
+
+  <!-- ░░░ TOAST CONTAINER ░░░ -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- ░░░ JAVASCRIPT ░░░ -->
+  <script>
+    'use strict';
+
+    // ─── Config ─────────────────────────────────────────────────
+    const API_BASE = '';  // same origin as Flask
+
+    // ─── Utilities ──────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const fmt = (n, decimals=2) => n == null ? '—' : parseFloat(n).toLocaleString('en-US', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+    const fmtBn = n => n == null ? '—' : `$${fmt(n)}B`;
+    const fmtMn = n => n == null ? '—' : `$${fmt(n)}M`;
+    const fmtK  = n => n == null ? '—' : (n >= 1000 ? (n/1000).toFixed(1)+'K' : n.toString());
+
+    function showToast(msg, type='info', dur=4000) {
+      const c = $('toast-container');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(), 300); }, dur);
+    }
+
+    async function apiFetch(path, params={}) {
+      const url = new URL(API_BASE + path, window.location.href);
+      Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`HTTP ${res.status} from ${path}`);
+      return res.json();
+    }
+
+    function getTierClass(tier) {
+      if (!tier) return 'tier-seed';
+      if (tier.includes('Unicorn'))  return 'tier-unicorn';
+      if (tier.includes('Series D')) return 'tier-seriesD';
+      if (tier.includes('Series B')) return 'tier-seriesBC';
+      if (tier.includes('Series A')) return 'tier-seriesA';
+      return 'tier-seed';
+    }
+
+    function formatDate(str) {
+      if (!str) return '';
+      try { return new Date(str).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}); }
+      catch { return str; }
+    }
+
+    // ─── Health check ────────────────────────────────────────────
+    async function checkHealth() {
+      try {
+        const data = await apiFetch('/api/health');
+        const badge = $('status-badge');
+        if (data.status === 'ok') {
+          badge.innerHTML = '<div class="status-dot"></div> Live · MySQL Connected';
+          showToast('Database connected successfully', 'success');
+        } else {
+          badge.innerHTML = '<div class="status-dot" style="background:var(--accent-amber)"></div> Degraded';
+          showToast('Database connection degraded', 'error');
+        }
+      } catch (e) {
+        $('status-badge').innerHTML = '<div class="status-dot" style="background:var(--accent-rose)"></div> Offline';
+        showToast('Flask server not reachable — start app.py', 'error', 8000);
+      }
+    }
+
+    // ─── KPI Stats ───────────────────────────────────────────────
+    async function loadStats() {
+      try {
+        const d = await apiFetch('/api/stats');
+        $('val-startups').textContent = fmtK(d.total_startups);
+        $('val-funding').textContent  = fmtBn(d.total_funding_bn);
+        $('val-markets').textContent  = d.total_markets ?? '—';
+        $('val-countries').textContent = d.total_countries ?? '—';
+        $('val-top-market').textContent = d.top_market ?? '—';
+        document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('kpi-skeleton'));
+      } catch(e) {
+        console.error('Stats error:', e);
+        showToast('Could not load KPI stats', 'error');
+      }
+    }
+
+    // ─── Funding Trend Line Chart ─────────────────────────────────
+    let trendChart = null;
+
+    async function loadFundingTrends() {
+      try {
+        const data = await apiFetch('/api/funding-trends');
+
+        if (!data.labels || data.labels.length === 0) {
+          $('trend-loading').textContent = 'No trend data available yet.';
+          return;
+        }
+
+        $('trend-loading').style.display = 'none';
+        const canvas = $('chart-trend');
+        canvas.style.display = 'block';
+
+        const ctx = canvas.getContext('2d');
+
+        if (trendChart) trendChart.destroy();
+
+        trendChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels:   data.labels,
+            datasets: data.datasets,
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  color: '#8A94A8',
+                  font: { family: "'Inter', sans-serif", size: 11 },
+                  boxWidth: 12,
+                  boxHeight: 12,
+                  borderRadius: 3,
+                  padding: 12,
+                },
+              },
+              tooltip: {
+                backgroundColor: 'rgba(13,22,41,0.95)',
+                borderColor: 'rgba(108,99,255,0.3)',
+                borderWidth: 1,
+                titleColor: '#E8EDF5',
+                bodyColor: '#8A94A8',
+                padding: 12,
+                callbacks: {
+                  label: ctx => ` ${ctx.dataset.label}: $${fmt(ctx.parsed.y)}M`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid:   { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+                ticks:  { color: '#4A5568', font: { size: 11 } },
+              },
+              y: {
+                grid:   { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+                ticks:  {
+                  color: '#4A5568', font: { size: 11 },
+                  callback: v => `$${v >= 1000 ? (v/1000).toFixed(0)+'B' : v+'M'}`,
+                },
+              },
+            },
+            animation: { duration: 1200, easing: 'easeInOutQuart' },
+          },
+        });
+
+        showToast('Funding trend chart loaded', 'success');
+      } catch(e) {
+        console.error('Trend chart error:', e);
+        $('trend-loading').textContent = '⚠ Could not load trend data.';
+      }
+    }
+
+    // ─── Status Doughnut Chart ───────────────────────────────────
+    let statusChart = null;
+
+    async function loadStatusChart() {
+      try {
+        const data = await apiFetch('/api/funding-by-status');
+
+        $('status-loading').style.display = 'none';
+        const canvas = $('chart-status');
+        canvas.style.display = 'block';
+
+        const COLORS = {
+          operating: '#6C63FF',
+          acquired:  '#43E8D8',
+          closed:    '#FF6584',
+          ipo:       '#F7B731',
+          Unknown:   '#4A5568',
+        };
+
+        const labels  = data.map(d => d.status ? d.status.charAt(0).toUpperCase()+d.status.slice(1) : 'Unknown');
+        const values  = data.map(d => parseFloat(d.total_funding_bn) || 0);
+        const colors  = data.map(d => COLORS[d.status] || '#6C63FF');
+
+        if (statusChart) statusChart.destroy();
+
+        statusChart = new Chart($('chart-status').getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels,
+            datasets: [{
+              data:            values,
+              backgroundColor: colors.map(c => c + 'cc'),
+              borderColor:     colors,
+              borderWidth:     2,
+              hoverOffset:     10,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  color: '#8A94A8',
+                  font: { family: "'Inter', sans-serif", size: 11 },
+                  boxWidth: 12,
+                  padding: 12,
+                },
+              },
+              tooltip: {
+                backgroundColor: 'rgba(13,22,41,0.95)',
+                borderColor: 'rgba(108,99,255,0.3)',
+                borderWidth: 1,
+                callbacks: {
+                  label: ctx => ` ${ctx.label}: $${fmt(ctx.parsed)}B`,
+                },
+              },
+            },
+            animation: { animateRotate: true, duration: 1000 },
+          },
+        });
+      } catch(e) {
+        console.error('Status chart error:', e);
+        $('status-loading').textContent = '⚠ Could not load status data.';
+      }
+    }
+
+    // ─── Top Markets Table ───────────────────────────────────────
+    let maxFunding = 1;
+
+    async function loadMarketsTable() {
+      try {
+        const data = await apiFetch('/api/top-markets');
+        if (!data.length) return;
+
+        maxFunding = Math.max(...data.map(d => parseFloat(d.total_funding_bn) || 0));
+        const tbody = $('markets-tbody');
+        tbody.innerHTML = '';
+
+        data.forEach((row, i) => {
+          const rank = i + 1;
+          const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-n';
+          const pct = ((parseFloat(row.total_funding_bn) / maxFunding) * 100).toFixed(0);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+            <td style="font-weight:600;max-width:200px;white-space:normal">${row.market || '—'}</td>
+            <td style="font-family:var(--font-mono);color:var(--accent-cyan)">${fmtBn(row.total_funding_bn)}</td>
+            <td style="font-family:var(--font-mono)">${fmtMn(row.avg_funding_mn)}</td>
+            <td style="font-family:var(--font-mono)">${fmtK(row.startup_count)}</td>
+            <td>${row.countries_represented ?? '—'}</td>
+            <td>
+              <div class="funding-bar-wrap">
+                <div class="funding-bar" style="width:${Math.max(4, pct * 1.2)}px"></div>
+                <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono)">${pct}%</span>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch(e) {
+        console.error('Markets table error:', e);
+        $('markets-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--accent-rose)">⚠ Failed to load market data</td></tr>';
+      }
+    }
+
+    // ─── AI Insights Cards ───────────────────────────────────────
+    let allAiRecords = [];
+    let activeMarket = '';
+
+    function renderAiCards(records) {
+      const grid = $('ai-cards-grid');
+      grid.innerHTML = '';
+
+      if (!records.length) {
+        grid.innerHTML = '<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">No summaries available for this filter.</div>';
+        return;
+      }
+
+      records.forEach(r => {
+        const tierClass = getTierClass(r.funding_tier);
+        const card = document.createElement('div');
+        card.className = 'ai-card';
+
+        // Highlight key tech terms in thesis
+        const highlightTerms = ['AI', 'ML', 'SaaS', 'cloud', 'platform', 'data', 'network', 'API', 'fintech', 'biotech', 'mRNA', 'payments'];
+        let thesis = r.investment_thesis || '';
+        highlightTerms.forEach(t => {
+          thesis = thesis.replace(new RegExp(`\\b${t}\\b`, 'gi'), m => `<strong>${m}</strong>`);
+        });
+
+        card.innerHTML = `
+          <div class="ai-card-glow"></div>
+          <div class="ai-card-header">
+            <div class="company-info">
+              <div class="company-name">${r.startup_name || 'Unknown'}</div>
+              <div class="company-meta">
+                <span class="tag tag-market">${r.market || 'N/A'}</span>
+                <span class="tag tag-country">${r.country_code || '—'}</span>
+                ${r.maturity_stage ? `<span class="tag tag-stage">${r.maturity_stage}</span>` : ''}
+              </div>
+            </div>
+            <div class="tier-badge ${tierClass}">${(r.funding_tier || 'Seed').split('(')[0].trim()}</div>
+          </div>
+          <div class="thesis-divider"></div>
+          <div class="thesis-label">Investment Thesis</div>
+          <p class="thesis-text">${thesis}</p>
+          <div class="ai-card-footer">
+            <div class="model-chip">${r.model_used || 'local-llm'}</div>
+            <div class="generated-time">${r.generated_at ? formatDate(r.generated_at) : ''}</div>
+          </div>
+        `;
+
+        // Staggered entrance animation
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        grid.appendChild(card);
+        setTimeout(() => {
+          card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, 50 * (grid.children.length - 1));
+      });
+    }
+
+    function buildFilterButtons(records) {
+      const markets = [...new Set(records.map(r => r.market).filter(Boolean))].slice(0, 8);
+      const bar = $('ai-filter-bar');
+      // Keep "All" button, add market filters
+      markets.forEach(m => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.textContent = m;
+        btn.dataset.market = m;
+        btn.id = `btn-${m.toLowerCase().replace(/\s+/g,'-')}`;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeMarket = m;
+          renderAiCards(allAiRecords.filter(r => r.market === m));
+        });
+        bar.appendChild(btn);
+      });
+    }
+
+    async function loadAiSummaries() {
+      try {
+        const data = await apiFetch('/api/ai-summaries', { limit: 50 });
+
+        if (data.source === 'demo') {
+          $('demo-banner').classList.add('visible');
+        }
+
+        allAiRecords = data.records || [];
+        buildFilterButtons(allAiRecords);
+
+        // "All" button click handler
+        $('btn-all').addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          $('btn-all').classList.add('active');
+          activeMarket = '';
+          renderAiCards(allAiRecords);
+        });
+
+        renderAiCards(allAiRecords);
+      } catch(e) {
+        console.error('AI summaries error:', e);
+        $('ai-cards-grid').innerHTML = '<div style="color:var(--accent-rose);padding:40px;text-align:center;grid-column:1/-1">⚠ Could not load AI summaries. Ensure app.py is running.</div>';
+      }
+    }
+
+    // ─── Boot ────────────────────────────────────────────────────
+    async function boot() {
+      // Run all API calls concurrently
+      await Promise.allSettled([
+        checkHealth(),
+        loadStats(),
+        loadFundingTrends(),
+        loadStatusChart(),
+        loadMarketsTable(),
+        loadAiSummaries(),
+      ]);
+    }
+
+    document.addEventListener('DOMContentLoaded', boot);
+  </script>
+</body>
+</html>
