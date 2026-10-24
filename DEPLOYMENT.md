@@ -15,7 +15,7 @@ kept out of the small web server. The original local MySQL/Ollama scripts remain
 4. Deploy. Open the URL Render provides and check `/api/health`.
 5. Select a startup and click **Generate AI thesis** to verify the live model.
 
-The model is configured with `GROQ_MODEL`, default `llama-3.3-70b-versatile`.
+The model is configured with `GROQ_MODEL`, default `openai/gpt-oss-20b`.
 If your Groq account no longer offers that model, choose an available chat model
 in Groq's console and update this environment variable.
 
