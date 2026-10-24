@@ -818,7 +818,12 @@
     @media (max-width: 768px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       h1.hero-title { font-size: 36px; }
-      .header-inner { flex-wrap: wrap; gap: 12px; }
+      .header-inner { flex-wrap: wrap; gap: 12px; height: auto; min-height: 64px; padding-top: 12px; padding-bottom: 12px; }
+    }
+    @media (max-width: 480px) {
+      .kpi-card { padding: 18px; }
+      .kpi-value { font-size: clamp(18px, 5.6vw, 24px); }
+      .hero { padding: 40px 0 32px; }
     }
     .generate-controls { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
     .generate-controls select { flex: 1; min-width: 0; width: 100%; padding: 12px; border-radius: 8px; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); }
