@@ -1,0 +1,366 @@
+{% extends "base.html" %} {% block title %}Research workspace — Venture Atlas{%
+endblock %} {% block content %}
+<div class="workspace wrap">
+  <div class="workspace-topline">
+    <div
+      class="workspace-tabs"
+      role="navigation"
+      aria-label="Workspace sections"
+    >
+      <a href="#overview">Overview</a><a href="#companies">Companies</a
+      ><a href="#research">Research desk</a>
+    </div>
+    <span id="connection-status" class="connection"
+      ><span class="status-dot"></span>Checking data service</span
+    >
+  </div>
+  <section id="overview" class="workspace-heading">
+    <div>
+      <p class="eyebrow">YOUR RESEARCH WORKSPACE</p>
+      <h1>Capital, in context.</h1>
+      <p>Follow a sector. Find a company. Ask a better question.</p>
+    </div>
+    <a class="text-link" href="/methodology">About this dataset ↗</a>
+  </section>
+  <form id="filter-form" class="filter-form" aria-label="Dataset filters">
+    <label
+      >Market<select name="market" id="market">
+        <option value="">All markets</option>
+      </select></label
+    >
+    <label
+      >Country<select name="country" id="country">
+        <option value="">All countries</option>
+      </select></label
+    >
+    <label
+      >Status<select name="status" id="status">
+        <option value="">All statuses</option>
+      </select></label
+    >
+    <div class="year-range">
+      <label
+        >Founded from<input
+          name="year_from"
+          id="year_from"
+          type="number"
+          min="1900"
+          max="2030"
+          placeholder="Any year" /></label
+      ><span aria-hidden="true">–</span
+      ><label
+        >Founded to<input
+          name="year_to"
+          id="year_to"
+          type="number"
+          min="1900"
+          max="2030"
+          placeholder="Any year"
+      /></label>
+    </div>
+    <button class="button button-dark" type="submit">Apply filters</button
+    ><button class="reset-button" type="reset">Reset</button>
+  </form>
+  <div class="filter-caption">
+    <p id="filter-summary" role="status">All records · historical snapshot</p>
+    <span id="loading-indicator" hidden>Updating workspace…</span>
+  </div>
+  <div id="dashboard-error" class="notice error-notice" role="alert" hidden>
+    <span></span
+    ><button type="button" id="retry-dashboard" class="text-link">
+      Try again ↻
+    </button>
+  </div>
+  <section
+    class="stat-grid"
+    aria-label="Filtered dataset summary"
+    aria-live="polite"
+  >
+    <article>
+      <span>Company records</span><strong id="stat-records">—</strong
+      ><small id="stat-disclosed">Reading the dataset</small>
+    </article>
+    <article>
+      <span>Total disclosed funding</span><strong id="stat-funding">—</strong
+      ><small>Lifetime total · not valuation</small>
+    </article>
+    <article>
+      <span>Market categories</span><strong id="stat-markets">—</strong
+      ><small id="stat-leading">—</small>
+    </article>
+    <article>
+      <span>Countries represented</span><strong id="stat-countries">—</strong
+      ><small>Records with a country code</small>
+    </article>
+  </section>
+  <section class="chart-grid">
+    <article class="panel cohort-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">THE LONG VIEW</p>
+          <h2>Funding across founding cohorts</h2>
+        </div>
+        <label class="compact-label"
+          >View<select id="chart-mode">
+            <option value="cumulative">Cumulative</option>
+            <option value="cohort">By cohort</option>
+          </select></label
+        >
+      </div>
+      <div id="cohort-chart" class="cohort-chart" aria-live="polite">
+        <p class="empty-state">Loading cohort analysis…</p>
+      </div>
+      <div id="chart-legend" class="chart-legend"></div>
+      <p class="chart-caption">
+        Company founding year → lifetime disclosed funding. These are cohorts,
+        not annual funding flows.
+        <a href="/methodology#cohorts">Definition ↗</a>
+      </p>
+    </article>
+    <article class="panel concentration-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">GEOGRAPHIC CONCENTRATION</p>
+          <h2>The top 1% of funded records</h2>
+        </div>
+      </div>
+      <div id="concentration-bars" class="country-bars">
+        <p class="empty-state">Loading country concentration…</p>
+      </div>
+      <p class="chart-caption">
+        Countries ranked by funding among records at or above the 99th
+        percentile of the filtered funded population.
+        <a href="/methodology#concentration">Definition ↗</a>
+      </p>
+    </article>
+  </section>
+  <section id="markets" class="panel markets-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">SECTOR ALLOCATION</p>
+        <h2>Where the funding sits</h2>
+      </div>
+      <span class="subtle">Top 15 markets · disclosed funding only</span>
+    </div>
+    <div
+      class="table-scroll"
+      tabindex="0"
+      role="region"
+      aria-label="Market ranking, scroll horizontally on small screens"
+    >
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Rank</th>
+            <th scope="col">Market</th>
+            <th scope="col" class="numeric">Total funding</th>
+            <th scope="col" class="numeric">Average / company</th>
+            <th scope="col" class="numeric">Companies</th>
+            <th scope="col">Share of top 15</th>
+          </tr>
+        </thead>
+        <tbody id="markets-body">
+          <tr>
+            <td colspan="6" class="empty-state">Loading market ranking…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="status-section">
+    <div>
+      <p class="eyebrow">RECORDED COMPANY STATUS</p>
+      <h2>A portfolio in different chapters.</h2>
+      <p>Statuses reflect this snapshot, not present-day operations.</p>
+    </div>
+    <div id="status-chart" class="status-chart" aria-live="polite"></div>
+  </section>
+  <section id="companies" class="panel companies-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">THE COMPANY DIRECTORY</p>
+        <h2>Find the story behind the number.</h2>
+      </div>
+      <a
+        href="/api/companies/export.csv"
+        id="export-csv"
+        class="button button-outline"
+        >Export results <span aria-hidden="true">↓</span></a
+      >
+    </div>
+    <div class="directory-controls">
+      <label class="search-field"
+        ><span class="sr-only">Search company names</span
+        ><svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5"></circle>
+          <path d="m16 16 5 5"></path></svg
+        ><input
+          type="search"
+          id="company-search"
+          placeholder="Search company names…"
+          maxlength="100"
+          autocomplete="off" /></label
+      ><label class="sort-field"
+        >Sort by<select id="company-sort">
+          <option value="funding_desc">Highest funding</option>
+          <option value="name_asc">Company name</option>
+          <option value="year_desc">Newest founded</option>
+        </select></label
+      >
+    </div>
+    <p class="directory-hint">
+      Directory uses the filters above. Select a company to inspect its
+      historical profile.
+    </p>
+    <div
+      class="table-scroll"
+      tabindex="0"
+      role="region"
+      aria-label="Company directory, scroll horizontally on small screens"
+    >
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Company</th>
+            <th scope="col">Market</th>
+            <th scope="col">Country</th>
+            <th scope="col">Founded</th>
+            <th scope="col">Recorded status</th>
+            <th scope="col" class="numeric">Disclosed funding</th>
+          </tr>
+        </thead>
+        <tbody id="companies-body">
+          <tr>
+            <td colspan="6" class="empty-state">Loading companies…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span id="company-count" role="status">—</span>
+      <div>
+        <button id="previous-page" class="button button-outline" disabled>
+          ← Previous</button
+        ><span id="page-number">Page 1</span
+        ><button id="next-page" class="button button-outline" disabled>
+          Next →
+        </button>
+      </div>
+    </div>
+  </section>
+  <section id="research" class="research-section">
+    <div class="research-intro">
+      <p class="eyebrow">THE RESEARCH DESK</p>
+      <h2>A first draft.<br />Your second look.</h2>
+      <p>
+        Generate a short research note from a company’s historical profile. Use
+        it to surface questions, then check the evidence yourself.
+      </p>
+      <ul class="research-rules">
+        <li>Grounded in the selected record</li>
+        <li>No live web research or current valuations</li>
+        <li>Saved notes stay in this browser</li>
+      </ul>
+      <button type="button" class="text-link" id="open-saved-notes">
+        Saved notes <span id="saved-notes-count">0</span> ↗
+      </button>
+    </div>
+    <div class="research-workbench">
+      <form id="research-form">
+        <label
+          >Find a company<input
+            id="research-search"
+            type="search"
+            maxlength="100"
+            placeholder="Search the full dataset…"
+            autocomplete="off" /></label
+        ><label
+          >Select a historical profile<select id="research-company" required>
+            <option value="">Loading company profiles…</option>
+          </select></label
+        >
+        <div id="selected-profile" class="selected-profile">
+          Select a company to begin.
+        </div>
+        <button
+          type="submit"
+          class="button button-green"
+          id="generate-button"
+          disabled
+        >
+          Generate research note <span aria-hidden="true">↗</span>
+        </button>
+      </form>
+      <p id="research-status" role="status" class="research-status"></p>
+      <article id="research-result" class="research-result" hidden>
+        <div class="note-topline">
+          <span>RESEARCH NOTE</span><span id="note-date"></span>
+        </div>
+        <h3 id="note-company"></h3>
+        <p id="note-thesis"></p>
+        <div class="note-source">
+          <span id="note-model"></span
+          ><span>Historical profile · review required</span>
+        </div>
+        <div class="note-actions">
+          <button class="text-link" id="copy-note">Copy note ↗</button
+          ><button class="text-link" id="save-note">
+            Save in this browser +
+          </button>
+        </div>
+      </article>
+      <div id="research-empty" class="research-empty">
+        <span class="note-mark" aria-hidden="true">Aa</span>
+        <p>Your research note will appear here.</p>
+        <small>Generated on request. No illustrative AI results.</small>
+      </div>
+      <p class="fine-print">
+        New server-side notes can reset when the free host restarts. Save or
+        copy a note to keep it. AI text may be inaccurate; verify it before use.
+      </p>
+    </div>
+  </section>
+  <div class="workspace-data-note">
+    <p>
+      <strong>Know the boundaries.</strong> Missing funding is not zero. Total
+      raised is not company value. Some records describe established businesses.
+    </p>
+    <a href="/methodology">Read the methodology →</a>
+  </div>
+</div>
+<dialog id="company-dialog" aria-labelledby="profile-title">
+  <div class="dialog-top">
+    <span class="eyebrow">COMPANY PROFILE</span
+    ><button
+      class="icon-button"
+      data-close="company-dialog"
+      aria-label="Close company profile"
+    >
+      ×
+    </button>
+  </div>
+  <h2 id="profile-title"></h2>
+  <p class="subtle">Historical snapshot · not a current company report</p>
+  <dl id="profile-details" class="profile-details"></dl>
+  <button id="profile-research" class="button button-green">
+    Research this company ↗
+  </button>
+</dialog>
+<dialog id="notes-dialog" aria-labelledby="saved-notes-title">
+  <div class="dialog-top">
+    <span class="eyebrow">YOUR BROWSER NOTEBOOK</span
+    ><button
+      class="icon-button"
+      data-close="notes-dialog"
+      aria-label="Close saved notes"
+    >
+      ×
+    </button>
+  </div>
+  <h2 id="saved-notes-title">Saved research notes</h2>
+  <p class="subtle">
+    Stored only in this browser. Clearing browser data removes these notes.
+  </p>
+  <div id="saved-notes-list"></div>
+</dialog>
+{% endblock %}

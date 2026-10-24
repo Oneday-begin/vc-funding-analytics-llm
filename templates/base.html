@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f7f0" />
+    <meta
+      name="description"
+      content="Explore historical venture funding, compare markets, and build grounded company research with Venture Atlas."
+    />
+    <title>
+      {% block title %}Venture Atlas — A clearer view of venture capital{%
+      endblock %}
+    </title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="{{ url_for('static', filename='mark.svg') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </head>
+  <body data-page="{{ page|default('error') }}">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap">
+        <a class="brand" href="/" aria-label="Venture Atlas home"
+          ><img src="/static/mark.svg" width="30" height="30" alt="" /><span
+            >Venture Atlas<span class="brand-caption"
+              >VENTURE FUNDING RESEARCH</span
+            ></span
+          ></a
+        >
+        <nav aria-label="Main navigation">
+          <a
+            href="/dashboard"
+            aria-current="{{ 'page' if page == 'dashboard' else 'false' }}"
+            >Explore data</a
+          >
+          <a
+            href="/methodology"
+            aria-current="{{ 'page' if page == 'methodology' else 'false' }}"
+            >Methodology</a
+          >
+          <a
+            class="nav-source"
+            href="https://github.com/Oneday-begin/vc-funding-analytics-llm"
+            target="_blank"
+            rel="noopener"
+            >Source code <span aria-hidden="true">↗</span></a
+          >
+        </nav>
+        <a
+          class="button button-dark nav-cta"
+          href="/dashboard{% if page == 'dashboard' %}#research{% endif %}"
+          >{% if page == 'dashboard' %}Research desk{% else %}Open workspace{%
+          endif %}<span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <noscript
+      ><p class="notice wrap">
+        Enable JavaScript to use the interactive charts, filters, and research
+        tools. <a href="/methodology">Read the methodology</a>.
+      </p></noscript
+    >
+    <main id="main">{% block content %}{% endblock %}</main>
+    <footer class="site-footer wrap">
+      <a class="footer-brand" href="/"
+        >Venture Atlas<span>A little more context. A better question.</span></a
+      >
+      <div>
+        <a href="/methodology">Data &amp; definitions</a
+        ><span>Historical snapshot · USD throughout</span>
+      </div>
+      <p>
+        An independent portfolio project.<br />Built for exploration, not
+        investment advice.
+      </p>
+    </footer>
+    <div id="toast" class="toast" role="status" hidden></div>
+  </body>
+</html>

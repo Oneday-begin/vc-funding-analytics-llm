@@ -18,6 +18,9 @@ def prepare(path="cloud.db"):
                 (name, market, funding_total_usd, status, country_code, founded_year)
                 VALUES (?, ?, ?, ?, ?, ?)""", records)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_market ON startup_investments(market)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_country ON startup_investments(country_code)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_year ON startup_investments(founded_year)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_funding ON startup_investments(funding_total_usd)")
         conn.execute("""CREATE TABLE IF NOT EXISTS ai_due_diligence_summaries (
             startup_id INTEGER PRIMARY KEY, startup_name TEXT, market TEXT,
             funding_tier TEXT, maturity_stage TEXT, country_code TEXT,

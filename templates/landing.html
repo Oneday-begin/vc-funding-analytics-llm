@@ -1,0 +1,153 @@
+{% extends "base.html" %} {% block content %}
+<div class="wrap">
+  <div class="edition-line">
+    <span>AN INDEPENDENT RESEARCH WORKSPACE</span
+    ><span>DATA / CONTEXT / CONVICTION</span>
+  </div>
+  <section class="landing-hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <p class="eyebrow">
+        <span class="tiny-cross" aria-hidden="true">+</span> A wider lens on the
+        market
+      </p>
+      <h1 id="hero-title">
+        Follow the capital.<br />Find your <em>perspective.</em>
+      </h1>
+      <p class="hero-description">
+        Look beyond the headline numbers. Explore the companies, sectors, and
+        patterns behind a historical venture funding dataset—then turn the
+        evidence into a better research question.
+      </p>
+      <div class="hero-actions">
+        <a class="button button-green" href="/dashboard"
+          >Explore the dataset <span aria-hidden="true">↗</span></a
+        ><a class="text-link" href="/methodology"
+          >How to read the data <span aria-hidden="true">→</span></a
+        >
+      </div>
+      <div class="hero-footnote">
+        <span class="status-dot"></span>No sign-up. Real data. Room for your own
+        interpretation.
+      </div>
+    </div>
+    <div class="market-paper" aria-label="Preview of top investment markets">
+      <div class="paper-top">
+        <span>THE MARKET, IN PERSPECTIVE</span><span>FIG. 01</span>
+      </div>
+      <div class="paper-title">
+        <h2>Where capital<br />found a home.</h2>
+        <span class="paper-unit">TOTAL DISCLOSED<br />FUNDING · USD</span>
+      </div>
+      <div id="landing-markets" class="preview-bars" aria-live="polite">
+        <p class="loading-text">Reading the market…</p>
+      </div>
+      <div class="paper-bottom">
+        <span>Historical investment records</span
+        ><a
+          href="/dashboard#markets"
+          aria-label="Explore the full market ranking"
+          >Explore ranking ↗</a
+        >
+      </div>
+    </div>
+  </section>
+  <section class="landing-metrics" aria-label="Dataset coverage">
+    <div>
+      <strong data-metric="total_records">—</strong
+      ><span>Company records to explore</span>
+    </div>
+    <div>
+      <strong data-metric="markets">—</strong><span>Market categories</span>
+    </div>
+    <div>
+      <strong data-metric="countries">—</strong
+      ><span>Countries represented</span>
+    </div>
+    <p>
+      A historical lens,<br /><em>not a live market feed.</em
+      ><a href="/methodology">Understand the snapshot ↗</a>
+    </p>
+  </section>
+  <section
+    class="section-spaced"
+    id="approach"
+    aria-labelledby="approach-title"
+  >
+    <div class="section-intro">
+      <p class="eyebrow">THE RESEARCH PROCESS</p>
+      <h2 id="approach-title">
+        From the big picture<br />to the better question.
+      </h2>
+      <p>
+        One workspace for the work between discovering a market and
+        understanding a company.
+      </p>
+    </div>
+    <div class="process-grid">
+      <article>
+        <span class="step-number">01 / ORIENT</span>
+        <h3>Read the landscape.</h3>
+        <p>
+          Compare sector funding, company status, and geographic concentration.
+          Set the boundaries of your research with shared filters.
+        </p>
+        <a class="text-link" href="/dashboard">Start with the overview ↗</a>
+      </article>
+      <article>
+        <span class="step-number">02 / INVESTIGATE</span>
+        <h3>Find the company.</h3>
+        <p>
+          Search the full dataset, inspect individual profiles, and export the
+          records behind your question. Missing data stays visible.
+        </p>
+        <a class="text-link" href="/dashboard#companies"
+          >Open the company directory ↗</a
+        >
+      </article>
+      <article>
+        <span class="step-number">03 / INTERPRET</span>
+        <h3>Build a research note.</h3>
+        <p>
+          Ask an AI model to examine a historical profile. Review its reasoning,
+          copy a note, or keep it in this browser for later.
+        </p>
+        <a class="text-link" href="/dashboard#research"
+          >Visit the research desk ↗</a
+        >
+      </article>
+    </div>
+  </section>
+  <section class="editorial-note" aria-labelledby="context-title">
+    <div>
+      <p class="eyebrow">A NOTE ON THE NUMBERS</p>
+      <h2 id="context-title">Good research starts<br />with honest data.</h2>
+    </div>
+    <div>
+      <p>
+        Total funding isn’t a valuation. A founding year isn’t a funding date.
+        And a historical company status doesn’t tell you where that business
+        stands today.
+      </p>
+      <p>
+        Venture Atlas keeps those distinctions in view, with definitions
+        alongside the analysis and a methodology you can inspect.
+      </p>
+      <a class="text-link" href="/methodology"
+        >Read the data notes <span aria-hidden="true">→</span></a
+      >
+    </div>
+  </section>
+  <section class="closing-cta">
+    <div>
+      <p class="eyebrow">START EXPLORING</p>
+      <h2>Bring your curiosity.<br />The dataset is open.</h2>
+    </div>
+    <div>
+      <a class="button button-cream" href="/dashboard"
+        >Enter the workspace <span aria-hidden="true">↗</span></a
+      >
+      <p>No account or setup required.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}

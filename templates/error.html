@@ -1,0 +1,9 @@
+{% extends "base.html" %} {% block title %}{{ code }} — Venture Atlas{% endblock
+%} {% block content %}
+<section class="wrap error-page">
+  <p class="eyebrow">{{ code }}</p>
+  <h1>This page isn’t in the atlas.</h1>
+  <p>{{ message }}</p>
+  <a class="button button-green" href="/">Back to the overview →</a>
+</section>
+{% endblock %}

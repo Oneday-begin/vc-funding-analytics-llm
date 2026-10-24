@@ -6,7 +6,7 @@ Production-grade ETL Pipeline for VC Funding Analytics & AI Due Diligence Engine
 Features:
   - Chunked CSV ingestion (chunksize=5000) for memory efficiency
   - Robust data cleaning: type coercion, null handling, encoding normalization
-  - Idempotent MySQL upsert via SQLAlchemy + PyMySQL
+  - Chunked MySQL append ingestion via SQLAlchemy + PyMySQL
   - Structured logging with run-time statistics
 """
 
@@ -27,7 +27,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-CSV_PATH = r"C:\Users\HP\Documents\DIV Projects\investments_VC.csv"
+CSV_PATH = os.getenv("CSV_PATH", "investments_VC.csv")
 CSV_ENCODING = "unicode_escape"
 CHUNK_SIZE = 5_000
 
@@ -200,17 +200,18 @@ def clean_chunk(raw: pd.DataFrame) -> pd.DataFrame:
 # ETL Orchestration
 # ──────────────────────────────────────────────
 
-def run_etl():
+def run_etl(csv_path=None):
+    source_path = csv_path or CSV_PATH
     start = time.perf_counter()
     log.info("=" * 60)
     log.info("VC Funding ETL Pipeline - START")
-    log.info("Source : %s", CSV_PATH)
+    log.info("Source : %s", source_path)
     log.info("Target : %s.%s", DB_NAME, TABLE_NAME)
     log.info("=" * 60)
 
     # Validate source file
-    if not Path(CSV_PATH).exists():
-        log.error("CSV file not found at: %s", CSV_PATH)
+    if not Path(source_path).exists():
+        log.error("CSV file not found at: %s", source_path)
         sys.exit(1)
 
     # Build DB connection
@@ -228,7 +229,7 @@ def run_etl():
     skipped_rows = 0
 
     reader = pd.read_csv(
-        CSV_PATH,
+        source_path,
         encoding=CSV_ENCODING,
         chunksize=CHUNK_SIZE,
         low_memory=False,
@@ -249,7 +250,6 @@ def run_etl():
             continue
 
         written = len(clean)
-        total_rows_written += written
         skipped_rows += raw_count - written
 
         if written == 0:
@@ -266,12 +266,14 @@ def run_etl():
                 method="multi",        # batch INSERT for speed
                 chunksize=1_000,
             )
+            total_rows_written += written
             log.info(
                 "Chunk %d | Written: %d rows | Dropped: %d rows",
                 chunk_num, written, raw_count - written,
             )
         except SQLAlchemyError as exc:
             log.error("Chunk %d DB write failed: %s", chunk_num, exc)
+            skipped_rows += written
 
     elapsed = time.perf_counter() - start
 
@@ -291,4 +293,7 @@ def run_etl():
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
-    run_etl()
+    import argparse
+    parser = argparse.ArgumentParser(description="Append a cleaned investment CSV to MySQL. Use an empty target table for a fresh import.")
+    parser.add_argument("--csv", default=CSV_PATH, help="Path to investments_VC.csv (or set CSV_PATH)")
+    run_etl(parser.parse_args().csv)
