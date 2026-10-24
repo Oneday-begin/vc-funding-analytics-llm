@@ -98,11 +98,20 @@ is independent of the dashboard filters.
 ```text
 python -m unittest discover -s tests -v
 node --check static/app.js
+python scripts/check_secrets.py --history
 ```
 
 Tests use isolated temporary SQLite databases and mocked provider responses;
 they do not call Groq or spend inference quota. GitHub Actions runs these checks
 on pushes and pull requests.
+
+Install the local staged-secret guard once per clone with
+`git config core.hooksPath .githooks`. The hook checks staged files before a
+commit; CI also checks reachable history. Neither replaces careful review or
+provider push protection. Keep secrets in private environment configuration.
+
+For a comprehensive architecture explanation, interview questions, and the
+end-to-end update/deployment procedure, read [the placement report](PLACEMENT_REPORT.md).
 
 ## What the numbers mean
 

@@ -5,6 +5,23 @@ __pycache__/
 
 # Environments
 .env
+.env.*
+*.env
+*.env.*
+!.env.example
+!.env.sample
+!.env.template
+.aws/
+.ssh/
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+*credentials*.json
+*service-account*.json
+*service_account*.json
+secrets.json
 .venv
 env/
 venv/
@@ -17,6 +34,17 @@ venv.bak/
 ai_summaries.json
 cloud.db
 cloud.db-*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+artifacts/
+tmp/
+output/
+live-phone.png
+render-setup.png
 
 # IDEs and editors
 .idea/
