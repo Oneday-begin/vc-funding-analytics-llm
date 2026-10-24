@@ -46,7 +46,7 @@ app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app)   # allow requests from any origin (dev mode)
 
 def get_engine():
-    url = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    url = os.getenv("DATABASE_URL") or f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     return create_engine(url, pool_pre_ping=True, pool_recycle=3600, echo=False)
 
 engine = get_engine()
@@ -63,10 +63,10 @@ def db_error_handler(f):
             return f(*args, **kwargs)
         except SQLAlchemyError as exc:
             log.error("Database error in %s: %s", f.__name__, exc)
-            return jsonify({"error": "Database error", "detail": str(exc)}), 500
+            return jsonify({"error": "Database unavailable. Please try again shortly."}), 500
         except Exception as exc:  # noqa: BLE001
             log.error("Unexpected error in %s: %s", f.__name__, exc)
-            return jsonify({"error": "Internal server error", "detail": str(exc)}), 500
+            return jsonify({"error": "Internal server error"}), 500
     return wrapper
 
 
@@ -75,7 +75,7 @@ def query_df(sql: str, params: dict = None) -> pd.DataFrame:
     with engine.connect() as conn:
         df = pd.read_sql(text(sql), conn, params=params or {})
     # Convert NaN → None for clean JSON serialisation
-    return df.where(pd.notnull(df), None)
+    return df.astype(object).where(pd.notnull(df), None)
 
 
 # ──────────────────────────────────────────────
@@ -103,9 +103,10 @@ def health():
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        return jsonify({"status": "ok", "database": "connected"})
+        return jsonify({"status": "ok", "database": "connected", "database_type": engine.dialect.name,
+                        "ai_configured": bool(os.getenv("GROQ_API_KEY"))})
     except Exception as exc:  # noqa: BLE001
-        return jsonify({"status": "degraded", "error": str(exc)}), 503
+        return jsonify({"status": "degraded", "error": "Database unavailable"}), 503
 
 
 @app.route("/api/stats")
@@ -350,7 +351,7 @@ def api_ai_summaries():
         return jsonify({"source": "demo", "records": demo})
 
     return jsonify({
-        "source":  "mysql",
+        "source":  engine.dialect.name,
         "records": df.to_dict(orient="records"),
     })
 
@@ -378,6 +379,9 @@ def api_funding_by_status():
 # Entry point
 # ──────────────────────────────────────────────
 
+from cloud_ai import register_cloud_ai
+register_cloud_ai(app, engine)
+
 if __name__ == "__main__":
     log.info("Starting VC Analytics Flask Server on http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=False, use_reloader=False)
